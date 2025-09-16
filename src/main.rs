@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn Error>>{
     // 调用flush能确保缓冲区被清空
     let stdout = BufWriter::new(io::stdout());
 
-    let editor = Editor::new(stdout);
+    let mut editor = Editor::new(stdout);
 
     let (sender, receiver) = mpsc::channel::<char>();
 
@@ -54,6 +54,8 @@ fn main() -> Result<(), Box<dyn Error>>{
             State::Continue => {},
             State::Exit => break,
         }
+        // 每次更新完editor的状态后刷新屏幕
+        editor.refresh_screen()?;
     }
 
     // 不需要join来使主线程阻塞等待handler关联的线程结束

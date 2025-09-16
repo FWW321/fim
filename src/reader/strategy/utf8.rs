@@ -40,8 +40,8 @@ impl<R: Read> DecodingStrategy<R> for Utf8Strategy {
           return Ok(None)
         };
 
-        #[cfg(debug_assertions)]
-        println!("first_byte: {:#010b}", first_byte);
+        // #[cfg(debug_assertions)]
+        // println!("first_byte: {:#010b}", first_byte);
 
         let required_bytes = self.required_bytes(first_byte);
 
