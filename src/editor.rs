@@ -1,12 +1,14 @@
+pub mod key;
 pub mod state;
 
-use std::io;
 use std::io::Write;
 use std::ops::Drop;
 
 use crossterm::{cursor, terminal, ExecutableCommand, QueueableCommand};
 
 use super::utils;
+use super::error::Result;
+pub use key::{ControlKey, Direction, Key};
 pub use state::State;
 
 pub struct Editor<W: Write> {
@@ -15,7 +17,7 @@ pub struct Editor<W: Write> {
     cx: u16,
     // cursor纵坐标
     cy: u16,
-    columns: u16, 
+    columns: u16,
     rows: u16,
 }
 
@@ -44,7 +46,7 @@ impl<W: Write> Editor<W> {
         editor
     }
 
-    pub fn refresh_screen(&mut self) -> io::Result<()> {
+    pub fn refresh_screen(&mut self) -> Result<()> {
         // execute会隐式调用flush，queue不会
         // 刷新屏幕之前隐藏光标，刷新完成之后显示，这样可以防止光标闪烁
         self.writer.execute(cursor::Hide)?;
@@ -65,7 +67,7 @@ impl<W: Write> Editor<W> {
         Ok(())
     }
 
-    fn draw_rows(&mut self) -> io::Result<()> {
+    fn draw_rows(&mut self) -> Result<()> {
         for i in 1..=self.rows {
             write!(&mut self.writer, "~")?;
 
@@ -96,48 +98,96 @@ impl<W: Write> Editor<W> {
         Ok(())
     }
 
-    pub fn process_char(&mut self, c: char) -> State {
-        match c {
-            c if Some(c) == utils::ctrl_key('q') => State::Exit,
+    pub fn process_key(&mut self, key: Key) -> State {
+        match key {
+            Key::ControlKey(ControlKey::Ctrl('q')) => State::Exit,
             // 必须使用括号分组，不然只绑定了'a'，是不完整的绑定
-            c @ ('a' | 'd' | 'w' | 's') => {
-                self.move_cursor(c);
+            key @ (Key::ArrowKey(Direction::Left)
+            | Key::ArrowKey(Direction::Right)
+            | Key::ArrowKey(Direction::Up)
+            | Key::ArrowKey(Direction::Down)) => {
+                self.move_cursor(key);
                 State::Continue
             }
-            c => {
-                println!("{c}");
+            Key::Char(c) => {
+                print!("{c}");
+                self.add_cx();
                 State::Continue
             }
+            Key::FunctionKey(n) => {
+                println!("F{n}");
+                State::Continue
+            },
+            Key::ControlKey(ControlKey::Escape) => {
+                print!("esc");
+                State::Continue
+            },
+            Key::ControlKey(ControlKey::PageUp) => {
+                self.scroll_srceen(self.rows, Direction::Up);
+                State::Continue
+            },
+            Key::ControlKey(ControlKey::PageDown) => {
+                self.scroll_srceen(self.rows, Direction::Down);
+                State::Continue
+            },
+            _ => State::Continue,
         }
     }
 
-    fn move_cursor(&mut self, key: char) {
-        // 注意：坐标不能小于0
+    fn move_cursor(&mut self, key: Key) {
         match key {
-            'a' => {
-                if self.cx > 0 {
-                    self.cx = self.cx - 1
-                }
-            }
-            'd' => {
-                if self.cx < self.columns - 1 {
-                    self.cx = self.cx + 1
-                }
-            },
-            'w' => {
-                if self.cy > 0 {
-                    self.cy = self.cy - 1
-                }
-            }
-            's' => {
-                // crossterm的cursor左上角单元格是(0,0)
-                // crossterm的size左上角单元格是(1,1)
-                // 注意转换
-                if self.cy < self.rows - 1 {
-                    self.cy = self.cy + 1
-                }
-            },
+            Key::ArrowKey(Direction::Left) => self.sub_cx(),
+            Key::ArrowKey(Direction::Right) => self.add_cx(),
+            Key::ArrowKey(Direction::Up) => self.sub_cy(),
+            Key::ArrowKey(Direction::Down) => self.add_cy(),
             _ => println!("unknow key"),
+        }
+    }
+
+    fn scroll_srceen(&mut self, nums: u16, direction: Direction) {
+        match direction {
+            Direction::Up => {
+                for _ in 0..nums {
+                    self.move_cursor(Key::ArrowKey(Direction::Up));
+                }
+            },
+            Direction::Down => {
+                for _ in 0..nums {
+                    self.move_cursor(Key::ArrowKey(Direction::Down));
+                }
+            },
+            Direction::Left => {
+            },
+            Direction::Right => {
+            },
+        }
+    }
+
+    fn add_cx(&mut self) {
+        if self.cx != self.columns - 1 {
+            self.cx = self.cx + 1
+        }
+    }
+
+    fn sub_cx(&mut self) {
+        // 注意：坐标不能小于0
+        if self.cx != 0 {
+            self.cx = self.cx - 1
+        }
+    }
+
+    fn add_cy(&mut self) {
+        // crossterm的cursor左上角单元格是(0,0)
+        // crossterm的size左上角单元格是(1,1)
+        // 注意转换
+        if self.cy != self.rows - 1 {
+            self.cy = self.cy + 1
+        }
+    }
+
+    fn sub_cy(&mut self) {
+        if self.cy != 0 {
+            self.cy = self.cy - 1
         }
     }
 }

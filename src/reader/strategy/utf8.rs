@@ -1,6 +1,7 @@
 use std::io::Read;
+
 use super::DecodingStrategy;
-use crate::error::{Result, ReaderError};
+use crate::error::{ReaderError, Result};
 
 pub struct Utf8Strategy;
 
@@ -21,11 +22,11 @@ impl Utf8Strategy {
     // 其余位可以为任意值，与0想与运结果固定为0
     fn required_bytes(&self, first_byte: u8) -> u8 {
         match first_byte {
-        b if b & 0b1000_0000 == 0 => 1,
-        b if b & 0b1110_0000 == 0b1100_0000 => 2,
-        b if b & 0b1111_0000 == 0b1110_0000 => 3,
-        b if b & 0b1111_1000 == 0b1111_0000 => 4,
-        _ => 0, // 无效的UTF-8起始字节
+            b if b & 0b1000_0000 == 0 => 1,
+            b if b & 0b1110_0000 == 0b1100_0000 => 2,
+            b if b & 0b1111_0000 == 0b1110_0000 => 3,
+            b if b & 0b1111_1000 == 0b1111_0000 => 4,
+            _ => 0, // 无效的UTF-8起始字节
         }
     }
 
@@ -35,9 +36,9 @@ impl Utf8Strategy {
 }
 
 impl<R: Read> DecodingStrategy<R> for Utf8Strategy {
-    fn read_char(&self, reader: &mut R) -> Result<Option<char>> {
+    fn read_char(&mut self, reader: &mut R) -> Result<Option<char>> {
         let Some(first_byte) = self.read_byte(reader)? else {
-          return Ok(None)
+            return Ok(None);
         };
 
         // #[cfg(debug_assertions)]
@@ -55,7 +56,7 @@ impl<R: Read> DecodingStrategy<R> for Utf8Strategy {
 
             for _ in 1..required_bytes {
                 let Some(next_byte) = self.read_byte(reader)? else {
-                  return Err(ReaderError::UnexpectedEof);
+                    return Err(ReaderError::UnexpectedEof);
                 };
 
                 if !self.is_continuation_byte(next_byte) {
@@ -64,7 +65,7 @@ impl<R: Read> DecodingStrategy<R> for Utf8Strategy {
 
                 code_point = code_point << 6 | (next_byte & 0b0011_1111) as u32;
             }
-            
+
             if let Some(c) = std::char::from_u32(code_point) {
                 Ok(Some(c))
             } else {

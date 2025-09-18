@@ -13,8 +13,8 @@ pub fn get_version_from_env() -> String {
 // Ctrl+A 和 Ctrl+a 产生相同的控制字符
 // 小写转大写：清除第五位 & 0b11011111
 // 大写转小写： 设置第五位 | 0b00100000
-pub fn ctrl_key(c: char) -> Option<char> {
-    let result = c as u32 & 0b00011111;
+// pub fn ctrl_key(c: char) -> Option<char> {
+//     let result = c as u32 & 0b00011111;
 
-    char::from_u32(result)
-}
+//     char::from_u32(result)
+// }
