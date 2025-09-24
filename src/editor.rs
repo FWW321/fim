@@ -4,10 +4,10 @@ pub mod state;
 use std::io::Write;
 use std::ops::Drop;
 
-use crossterm::{cursor, terminal, ExecutableCommand, QueueableCommand};
+use crossterm::{ExecutableCommand, QueueableCommand, cursor, terminal};
 
-use super::utils;
 use super::error::Result;
+use super::utils;
 pub use key::{ControlKey, Direction, Key};
 pub use state::State;
 
@@ -72,8 +72,7 @@ impl<W: Write> Editor<W> {
             write!(&mut self.writer, "~")?;
 
             if i == self.rows / 3 {
-                let mut welcome =
-                    format!("fww editor -- version: {}", utils::get_version_from_env());
+                let mut welcome = format!("fim -- version: {}", utils::get_version_from_env());
                 // 如果欢迎字符串的宽度超过终端宽带，则截断
                 if welcome.len() > self.columns as usize {
                     let bytes = welcome.as_bytes();
@@ -117,19 +116,19 @@ impl<W: Write> Editor<W> {
             Key::FunctionKey(n) => {
                 println!("F{n}");
                 State::Continue
-            },
+            }
             Key::ControlKey(ControlKey::Escape) => {
                 print!("esc");
                 State::Continue
-            },
+            }
             Key::ControlKey(ControlKey::PageUp) => {
                 self.scroll_srceen(self.rows, Direction::Up);
                 State::Continue
-            },
+            }
             Key::ControlKey(ControlKey::PageDown) => {
                 self.scroll_srceen(self.rows, Direction::Down);
                 State::Continue
-            },
+            }
             _ => State::Continue,
         }
     }
@@ -150,29 +149,27 @@ impl<W: Write> Editor<W> {
                 for _ in 0..nums {
                     self.move_cursor(Key::ArrowKey(Direction::Up));
                 }
-            },
+            }
             Direction::Down => {
                 for _ in 0..nums {
                     self.move_cursor(Key::ArrowKey(Direction::Down));
                 }
-            },
-            Direction::Left => {
-            },
-            Direction::Right => {
-            },
+            }
+            Direction::Left => {}
+            Direction::Right => {}
         }
     }
 
     fn add_cx(&mut self) {
         if self.cx != self.columns - 1 {
-            self.cx = self.cx + 1
+            self.cx += 1
         }
     }
 
     fn sub_cx(&mut self) {
         // 注意：坐标不能小于0
         if self.cx != 0 {
-            self.cx = self.cx - 1
+            self.cx -= 1
         }
     }
 
@@ -181,13 +178,13 @@ impl<W: Write> Editor<W> {
         // crossterm的size左上角单元格是(1,1)
         // 注意转换
         if self.cy != self.rows - 1 {
-            self.cy = self.cy + 1
+            self.cy += 1
         }
     }
 
     fn sub_cy(&mut self) {
         if self.cy != 0 {
-            self.cy = self.cy - 1
+            self.cy -= 1
         }
     }
 }

@@ -1,11 +1,17 @@
 use std::io::{self, BufWriter};
 
+use fim::reader::{ByteStream, DecoderBuilder, KeyStream};
+use tokio::io::{stdin};
+use tracing::Level;
+
 use fim::editor::{Editor, State};
 use fim::error::Result;
-use fim::reader::encoding::Encoding;
-use fim::reader::CharReader;
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
+    
+    tracing_subscriber::fmt().with_max_level(Level::ERROR).init();
+
     // std::io::stout() 会返回返回当前进程的标准输出流 stdout 的句柄
     // 将内容刷新到终端是很昂贵的操作
     // 封装一个writer并缓冲其输出，避免频繁系统调用
@@ -17,10 +23,19 @@ fn main() -> Result<()> {
 
     let mut editor = Editor::new(stdout);
 
-    let mut char_reader = CharReader::new(Encoding::Utf8);
+    let reader = stdin();
+
+    let byte_stream = ByteStream::new(reader);
+
+    let decoder = DecoderBuilder::new()
+    .encoding("utf-8".to_owned())
+    .byte_stream(byte_stream)
+    .build()?;
+
+    let mut key_stream = KeyStream::new(decoder);
 
     loop {
-        match char_reader.get_key() {
+        match key_stream.next_key().await {
             Ok(Some(key)) => match editor.process_key(key) {
                 State::Continue => {
                     // 每次更新完editor的状态后刷新屏幕
