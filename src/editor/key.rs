@@ -1,3 +1,4 @@
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Key {
     // 普通字符
     Char(char),
@@ -15,6 +16,7 @@ pub enum Key {
     // Unknown(Vec<u8>),
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Direction {
     Up,
     Down,
@@ -22,11 +24,14 @@ pub enum Direction {
     Right,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ControlKey {
     Ctrl(char), // Ctrl+字母/数字
     Alt(char),  // Alt+字符
     Tab,
-    Enter,
+    LF,
+    CR,
+    // Enter,
     Escape,
     Backspace,
     Delete,
@@ -37,6 +42,7 @@ pub enum ControlKey {
     Insert,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SpecialKey {
     CapsLock,
     NumLock,

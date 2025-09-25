@@ -6,12 +6,12 @@ use std::cmp::{Eq, PartialEq};
 use std::fmt;
 use std::marker::Unpin;
 
+use bon::bon;
 use tokio::io::AsyncReadExt;
 
 use crate::error::Result;
 use crate::reader::ByteStream;
 pub use acsii::AsciiDecoder;
-pub use builder::DecoderBuilder;
 pub use utf8::Utf8Decoder;
 
 pub enum Decoder<R: AsyncReadExt + Unpin> {
@@ -37,7 +37,20 @@ impl<R: AsyncReadExt + Unpin> PartialEq for Decoder<R> {
 // Eq没有方法
 impl<R: AsyncReadExt + Unpin> Eq for Decoder<R> {}
 
+#[bon]
 impl<R: AsyncReadExt + Unpin> Decoder<R> {
+    #[builder]
+    pub fn new(encoding: String, byte_stream: ByteStream<R>) -> Result<Self> {
+        match encoding.to_ascii_lowercase().as_str() {
+            "utf-8" => Ok(Decoder::Utf8(Utf8Decoder::new(byte_stream))),
+            "ascii" => Ok(Decoder::Ascii(AsciiDecoder::new(byte_stream))),
+            _ => Err(crate::error::EditorError::UnsupportedEncoding {
+                encoding: encoding,
+                available: Decoder::<R>::get_list(),
+            }),
+        }
+    }
+
     pub fn get_name(&self) -> &'static str {
         match self {
             Decoder::Utf8(_) => "UTF-8",
@@ -69,7 +82,7 @@ impl<R: AsyncReadExt + Unpin> Decoder<R> {
         }
 
         let byte_stream = self.take_stream();
-        DecoderBuilder::new()
+        Self::builder()
             .encoding(encoding)
             .byte_stream(byte_stream)
             .build()
@@ -86,6 +99,13 @@ impl<R: AsyncReadExt + Unpin> Decoder<R> {
         match self {
             Decoder::Utf8(decoder) => decoder.is_next_esc().await,
             Decoder::Ascii(decoder) => decoder.is_next_esc().await,
+        }
+    }
+
+    pub async fn read_line(&mut self) -> Result<Option<String>> {
+        match self {
+            Decoder::Utf8(decoder) => decoder.read_line().await,
+            Decoder::Ascii(decoder) => decoder.read_line().await,
         }
     }
 }

@@ -79,11 +79,11 @@ pub enum EditorError {
         limit: usize,
     },
 
-    #[error("Encoding type not specified")]
-    EncodingNotSet,
+    // #[error("Encoding type not specified")]
+    // EncodingNotSet,
 
-    #[error("Byte stream not provided")]
-    ByteStreamNotSet,
+    // #[error("Byte stream not provided")]
+    // ByteStreamNotSet,
 }
 
 impl EditorError {
@@ -161,8 +161,8 @@ impl EditorError {
             // Self::BufferOverflow { .. } => false,
             Self::ParseTimeout { .. } => true,
             Self::ResourceExhausted { .. } => false,
-            Self::ByteStreamNotSet => true,
-            Self::EncodingNotSet => true,
+            // Self::ByteStreamNotSet => true,
+            // Self::EncodingNotSet => true,
         }
     }
     
@@ -177,8 +177,8 @@ impl EditorError {
             // Self::BufferOverflow { .. } => ErrorSeverity::Critical,
             Self::ParseTimeout { .. } => ErrorSeverity::Warning,
             Self::ResourceExhausted { .. } => ErrorSeverity::Critical,
-            Self::ByteStreamNotSet => ErrorSeverity::Error,
-            Self::EncodingNotSet => ErrorSeverity::Error
+            // Self::ByteStreamNotSet => ErrorSeverity::Error,
+            // Self::EncodingNotSet => ErrorSeverity::Error
         }
     }
 }

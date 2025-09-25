@@ -51,4 +51,31 @@ impl<R: AsyncReadExt + Unpin> AsciiDecoder<R> {
     pub fn take_stream(self) -> ByteStream<R> {
         self.byte_stream
     }
+
+    pub async fn read_line(&mut self) -> Result<Option<String>> {
+        let mut line = String::new();
+        loop {
+            match self.decode_char().await? {
+                Some(c) => {
+                    if c == '\n' {
+                        break;
+                    } else if c == '\r' {
+                        // 忽略回车符
+                        continue;
+                    } else {
+                        line.push(c);
+                    }
+                }
+                None => {
+                    // EOF reached
+                    if line.is_empty() {
+                        return Ok(None);
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
+        Ok(Some(line))
+    }
 }

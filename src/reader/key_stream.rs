@@ -220,10 +220,15 @@ impl<R: AsyncReadExt + Unpin> KeyStream<R> {
     fn convert_char_to_key(c: char) -> Key {
         match c {
             '\u{001B}' => Key::ControlKey(ControlKey::Escape),
+            '\r' => Key::ControlKey(ControlKey::CR),
+            // 换行 Line Feed
+            '\n' => Key::ControlKey(ControlKey::LF),
+            '\t' => Key::ControlKey(ControlKey::Tab),
+            '\u{007F}' => Key::ControlKey(ControlKey::Delete),
             c @ '\u{0000}'..='\u{001F}' => {
                 Key::ControlKey(ControlKey::Ctrl(Self::ctrl_key_reverse(c).unwrap()))
-            }
-            '\u{007F}' => Key::ControlKey(ControlKey::Delete),
+            },
+            // 回车 Carriage Return
             _ => Key::Char(c),
         }
     }

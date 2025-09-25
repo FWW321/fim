@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 use std::marker::Unpin;
 
-use tracing::{debug, error, instrument, trace};
 use tokio::io::AsyncReadExt;
+use tracing::{debug, error, instrument, trace};
 
 use crate::error::{EditorError, Result};
 
@@ -126,7 +126,8 @@ impl<R: AsyncReadExt + Unpin> ByteStream<R> {
         while self.byte_buffer.len() < safe_count {
             // read一般会从索引0覆盖写入，可以不用clear
             // self.read_buffer.clear();
-            self.read_buffer.resize(safe_count - self.byte_buffer.len(), 0);
+            self.read_buffer
+                .resize(safe_count - self.byte_buffer.len(), 0);
 
             // 切片的长度是read_buffer的len长度，所以只需要调整长度就行，避免内存分配
             match self.reader.read(&mut self.read_buffer).await? {

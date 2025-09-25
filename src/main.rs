@@ -1,16 +1,17 @@
 use std::io::{self, BufWriter};
 
-use fim::reader::{ByteStream, DecoderBuilder, KeyStream};
-use tokio::io::{stdin};
+use fim::reader::{ByteStream, Decoder, KeyStream};
+use tokio::io::stdin;
 use tracing::Level;
 
-use fim::editor::{Editor, State};
+use fim::editor::Editor;
 use fim::error::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    
-    tracing_subscriber::fmt().with_max_level(Level::ERROR).init();
+    tracing_subscriber::fmt()
+        .with_max_level(Level::ERROR)
+        .init();
 
     // std::io::stout() 会返回返回当前进程的标准输出流 stdout 的句柄
     // 将内容刷新到终端是很昂贵的操作
@@ -21,27 +22,26 @@ async fn main() -> Result<()> {
     // 调用flush能确保缓冲区被清空
     let stdout = BufWriter::new(io::stdout());
 
-    let mut editor = Editor::new(stdout);
+    let mut editor = Editor::start(stdout, Some("test.txt")).await;
+
+    // let mut editor = Editor::start(stdout, None).await;
 
     let reader = stdin();
 
     let byte_stream = ByteStream::new(reader);
 
-    let decoder = DecoderBuilder::new()
-    .encoding("utf-8".to_owned())
-    .byte_stream(byte_stream)
-    .build()?;
+    let decoder = Decoder::builder()
+        .encoding("utf-8".to_owned())
+        .byte_stream(byte_stream)
+        .build()?;
 
     let mut key_stream = KeyStream::new(decoder);
 
     loop {
         match key_stream.next_key().await {
-            Ok(Some(key)) => match editor.process_key(key) {
-                State::Continue => {
-                    // 每次更新完editor的状态后刷新屏幕
-                    editor.refresh_screen()?;
-                }
-                State::Exit => break,
+            Ok(Some(key)) =>  {
+                editor.handle_command(&key);
+                editor.refresh_screen()?;
             },
             Ok(None) => {
                 // EOF reached

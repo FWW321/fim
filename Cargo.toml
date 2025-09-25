@@ -7,3 +7,14 @@ edition = "2024"
 thiserror = "2.0"
 crossterm = "0.29"
 crossbeam-channel = "0.5"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+tokio = { version = "1", features = ["full"] }
+bon = "3.7"
+
+# [dev-dependencies]
+# criterion = { version = "0.7", features = ["html_reports"] }
+
+# [[bench]]
+# name = "reader_performance"
+# harness = false
