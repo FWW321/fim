@@ -1,5 +1,4 @@
 pub mod acsii;
-pub mod builder;
 pub mod utf8;
 
 use std::cmp::{Eq, PartialEq};

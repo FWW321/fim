@@ -22,8 +22,6 @@ async fn main() -> Result<()> {
     // 调用flush能确保缓冲区被清空
     let stdout = BufWriter::new(io::stdout());
 
-    let mut editor = Editor::start(stdout, Some("test.txt")).await;
-
     // let mut editor = Editor::start(stdout, None).await;
 
     let reader = stdin();
@@ -35,24 +33,13 @@ async fn main() -> Result<()> {
         .byte_stream(byte_stream)
         .build()?;
 
-    let mut key_stream = KeyStream::new(decoder);
+    let key_stream = KeyStream::new(decoder);
 
-    loop {
-        match key_stream.next_key().await {
-            Ok(Some(key)) =>  {
-                editor.handle_command(&key);
-                editor.refresh_screen()?;
-            },
-            Ok(None) => {
-                // EOF reached
-                println!("End of input reached.");
-                break;
-            }
-            Err(e) => {
-                eprintln!("Error reading Key: {}", e);
-            }
-        }
-    }
+    let mut editor = Editor::new(key_stream, stdout).await;
+
+    editor.start(Some("test.txt")).await;
+
+    editor.run().await;
 
     // 不需要join来使主线程阻塞等待handler关联的线程结束
     // 线程不结束sender不会被销毁，receiver的循环也不会结束

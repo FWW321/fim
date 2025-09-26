@@ -1,3 +1,5 @@
+const TAB_STOP: u8 = 8;
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Key {
     // 普通字符
@@ -14,6 +16,32 @@ pub enum Key {
     // MouseEvent(MouseEvent),
     // 未知或无法解析的输入
     // Unknown(Vec<u8>),
+}
+
+impl Key {
+    pub fn render(&self) -> String {
+        match self{
+            Key::Char(c) => format!("{c}"),
+            Key::ControlKey(ControlKey::Tab) => {
+                let mut s = String::new();
+                for _ in 0..(TAB_STOP as usize) {
+                    s.push(' ');
+                }
+                s
+            },
+            _ => {
+                "".to_owned()
+            }
+        }
+    }
+
+    pub fn get_display_width(&self) -> usize {
+        match self {
+            Key::Char(_) => 1,
+            Key::ControlKey(ControlKey::Tab) => TAB_STOP as usize,
+            _ => 0,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

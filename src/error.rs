@@ -84,6 +84,8 @@ pub enum EditorError {
 
     // #[error("Byte stream not provided")]
     // ByteStreamNotSet,
+    #[error("Not found")]
+    NotFound,
 }
 
 impl EditorError {
@@ -163,6 +165,7 @@ impl EditorError {
             Self::ResourceExhausted { .. } => false,
             // Self::ByteStreamNotSet => true,
             // Self::EncodingNotSet => true,
+            Self::NotFound => true,
         }
     }
     
@@ -179,6 +182,7 @@ impl EditorError {
             Self::ResourceExhausted { .. } => ErrorSeverity::Critical,
             // Self::ByteStreamNotSet => ErrorSeverity::Error,
             // Self::EncodingNotSet => ErrorSeverity::Error
+            Self::NotFound => ErrorSeverity::Warning,
         }
     }
 }

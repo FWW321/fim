@@ -222,9 +222,14 @@ impl<R: AsyncReadExt + Unpin> KeyStream<R> {
             '\u{001B}' => Key::ControlKey(ControlKey::Escape),
             '\r' => Key::ControlKey(ControlKey::CR),
             // 换行 Line Feed
+            // raw mode下，enter键发送的是\r
+            // ctrl+J发送的是\n, ctrl+M发送的是\r
             '\n' => Key::ControlKey(ControlKey::LF),
             '\t' => Key::ControlKey(ControlKey::Tab),
-            '\u{007F}' => Key::ControlKey(ControlKey::Delete),
+            // 在ascii码表中，127是Del，而8是BS
+            // 在现代计算机中，BS通常映射为127
+            // 而Del是转义序列 <esc>[3~
+            '\u{007F}' => Key::ControlKey(ControlKey::Backspace),
             c @ '\u{0000}'..='\u{001F}' => {
                 Key::ControlKey(ControlKey::Ctrl(Self::ctrl_key_reverse(c).unwrap()))
             },
